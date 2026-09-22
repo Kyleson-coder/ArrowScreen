@@ -1,5 +1,34 @@
-const roomId = location.pathname.split('/').filter(Boolean).pop();
-const socket = io();
-const setStatus = (text, connected = false) => { const el = document.getElementById('status'); if (el) el.textContent = text; const dot = document.getElementById('dot'); if (dot) dot.classList.toggle('ok', connected); };
-const showError = message => { const el = document.getElementById('error'); if (el) { el.textContent = message; el.classList.remove('hidden'); } };
-const copy = async value => { try { await navigator.clipboard.writeText(value); } catch { const input = document.createElement('input'); input.value = value; document.body.appendChild(input); input.select(); document.execCommand('copy'); input.remove(); } };
+let selectedMode = 'phone';
+
+document.querySelectorAll('.choice').forEach(button => {
+  button.addEventListener('click', () => {
+    selectedMode = button.dataset.mode;
+    document.querySelectorAll('.choice').forEach(item => item.classList.toggle('selected', item === button));
+  });
+});
+
+document.getElementById('create').addEventListener('click', async () => {
+  const response = await fetch('/api/room');
+  const data = await response.json();
+  const shareUrl = `${data.shareUrl}?mode=${selectedMode}`;
+  document.getElementById('share').value = shareUrl;
+  document.getElementById('view').value = data.viewUrl;
+  document.getElementById('links').classList.remove('hidden');
+});
+
+document.querySelectorAll('[data-copy]').forEach(button => {
+  button.addEventListener('click', async () => {
+    const input = document.getElementById(button.dataset.copy);
+    if (!input) return;
+    try {
+      await navigator.clipboard.writeText(input.value);
+    } catch {
+      const temp = document.createElement('input');
+      temp.value = input.value;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      temp.remove();
+    }
+  });
+});

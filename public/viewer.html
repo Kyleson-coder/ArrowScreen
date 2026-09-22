@@ -1,1 +1,64 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>View - ArrowScreen</title><link rel="stylesheet" href="/css/styles.css"></head><body class="viewer"><header><div class="brand">➤ ArrowScreen</div><button id="full" class="secondary">Fullscreen</button></header><div class="viewbox"><video id="remote" autoplay playsinline controls></video><p id="empty" class="muted">Waiting for the sender to start sharing…</p></div><script src="/socket.io/socket.io.js"></script><script src="/js/common.js"></script><script src="/js/viewer.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#07111f" />
+    <title>Share | ArrowScreen</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body class="share-page">
+    <main class="shell shell-share">
+      <section class="card share-card">
+        <header class="topbar compact">
+          <div class="brand">
+            <span class="brand-mark">➤</span>
+            <span>ArrowScreen</span>
+          </div>
+          <div class="status-inline">
+            <i id="dot"></i>
+            <span id="status">Joining session…</span>
+          </div>
+        </header>
+
+        <div class="share-body">
+          <div class="title-wrap">
+            <span class="eyebrow">Sender</span>
+            <h2>Ready to share your screen?</h2>
+          </div>
+
+          <p class="muted share-text">
+            Choose <strong>Allow</strong> in the browser prompt. The app never asks for your location.
+          </p>
+
+          <div class="permission-box">
+            <b>Before you start</b>
+            <ul>
+              <li>Use an HTTPS deployment for live testing.</li>
+              <li>Keep this tab open while sharing.</li>
+              <li>System audio depends on browser and device support.</li>
+            </ul>
+          </div>
+
+          <div class="toggle-group">
+            <label class="toggle"><input id="mic" type="checkbox" /> Microphone audio</label>
+            <label class="toggle"><input id="systemAudio" type="checkbox" checked /> Include available system audio</label>
+          </div>
+
+          <div class="action-row">
+            <button id="start" class="primary-btn" type="button">Start screen sharing</button>
+            <button id="stop" class="secondary-btn hidden" type="button">Stop sharing</button>
+          </div>
+
+          <video id="preview" autoplay muted playsinline></video>
+          <p id="error" class="error hidden"></p>
+          <a class="ghost-link" href="/">← Create another session</a>
+        </div>
+      </section>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="/js/share.js"></script>
+  </body>
+</html>

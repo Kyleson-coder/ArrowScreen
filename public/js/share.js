@@ -1,67 +1,19 @@
-const params = new URLSearchParams(location.search);
-const mode = params.get('mode') || 'phone';
-const roomId = location.pathname.split('/').filter(Boolean).pop();
-const socket = io();
-let pc = null;
-let stream = null;
-let iceServers = [];
-let remoteDescriptionSet = false;
-let pendingCandidates = [];
-let joined = false;
+function setStatus(text, connected = false) {
+  const statusText = document.getElementById('status');
+  const dot = document.getElementById('dot');
+  if (statusText) statusText.textContent = text;
+  if (dot) dot.classList.toggle('ok', connected);
+}
 
-async function loadIceServers() {
-  try { const response = await fetch('/api/ice-servers', { cache: 'no-store' }); iceServers = (await response.json()).iceServers || []; }
-  catch { iceServers = [{ urls: 'stun:stun.l.google.com:19302' }]; }
+function showError(message) {
+  const error = document.getElementById('error');
+  if (error) {
+    error.textContent = message;
+    error.classList.remove('hidden');
+  }
 }
-function makePeer() {
-  pc = new RTCPeerConnection({ iceServers });
-  pc.onicecandidate = event => event.candidate && socket.emit('ice-candidate', event.candidate);
-  pc.onconnectionstatechange = () => {
-    if (pc.connectionState === 'connected') setStatus('Connected — sharing', true);
-    if (['failed', 'disconnected'].includes(pc.connectionState)) setStatus('Connection interrupted');
-  };
+
+function getRoomIdFromPath() {
+  const parts = location.pathname.split('/').filter(Boolean);
+  return parts[parts.length - 1] || null;
 }
-async function negotiate() {
-  if (!pc || !stream) return;
-  const offer = await pc.createOffer({ offerToReceiveAudio: false, offerToReceiveVideo: false });
-  await pc.setLocalDescription(offer);
-  socket.emit('offer', offer);
-}
-async function start() {
-  if (stream) { await negotiate(); return; }
-  try {
-    if (!navigator.mediaDevices?.getDisplayMedia) throw new Error('This browser does not support browser screen sharing.');
-    stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: document.getElementById('systemAudio').checked });
-    if (document.getElementById('mic').checked) {
-      const mic = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mic.getAudioTracks().forEach(track => stream.addTrack(track));
-    }
-    document.getElementById('preview').srcObject = stream;
-    makePeer();
-    stream.getTracks().forEach(track => { pc.addTrack(track, stream); track.onended = stop; });
-    document.getElementById('start').classList.add('hidden');
-    document.getElementById('stop').classList.remove('hidden');
-    setStatus('Share permission approved', true);
-    await negotiate();
-  } catch (error) { showError(error.name === 'NotAllowedError' ? 'Sharing was blocked. Tap Start sharing and choose Allow.' : error.message); }
-}
-function stop() {
-  stream?.getTracks().forEach(track => track.stop());
-  stream = null; pc?.close(); pc = null; remoteDescriptionSet = false; pendingCandidates = [];
-  socket.emit('share-stopped');
-  document.getElementById('preview').srcObject = null;
-  document.getElementById('start').classList.remove('hidden');
-  document.getElementById('stop').classList.add('hidden');
-  setStatus('Sharing stopped');
-}
-async function join() { await loadIceServers(); socket.emit('join-room', { roomId, role: 'sender', mode }); joined = true; }
-socket.on('connect', join);
-socket.on('joined-room', () => setStatus('Waiting for receiver…'));
-socket.on('viewer-requested-offer', () => stream ? negotiate() : setStatus('Receiver connected — tap Start sharing'));
-socket.on('answer', async answer => { if (!pc) return; await pc.setRemoteDescription(answer); remoteDescriptionSet = true; for (const candidate of pendingCandidates) await pc.addIceCandidate(candidate); pendingCandidates = []; });
-socket.on('ice-candidate', candidate => remoteDescriptionSet ? pc?.addIceCandidate(candidate) : pendingCandidates.push(candidate));
-socket.on('room-full', () => showError('This session already has a sender or receiver.'));
-socket.on('peer-disconnected', () => setStatus('Receiver disconnected'));
-socket.on('app-error', showError);
-document.getElementById('start').onclick = start;
-document.getElementById('stop').onclick = stop;
