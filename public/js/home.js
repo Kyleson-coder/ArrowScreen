@@ -1,0 +1,4 @@
+let selectedMode = 'phone';
+document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => { selectedMode = button.dataset.mode; document.querySelectorAll('[data-mode]').forEach(item => item.classList.remove('selected')); button.classList.add('selected'); }));
+document.getElementById('create').addEventListener('click', async () => { const response = await fetch('/api/room'); const data = await response.json(); document.getElementById('share').value = `${data.shareUrl}?mode=${selectedMode}`; document.getElementById('view').value = data.viewUrl; document.getElementById('links').classList.remove('hidden'); });
+document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', () => copy(document.getElementById(button.dataset.copy).value)));

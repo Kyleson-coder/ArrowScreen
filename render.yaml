@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: arrowscreen
+    env: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ICE_SERVERS
+        value: stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302
